@@ -66,6 +66,7 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+GITHUB_SETUP.md
 
 # Build artifacts
 *.pid
