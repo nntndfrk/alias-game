@@ -1,9 +1,51 @@
-<main class="app-container">
-  <header class="app-header">
-    <h1>{{ title() }}</h1>
+<main class="min-h-screen flex flex-col">
+  <header class="p-4 bg-primary text-primary-foreground text-center">
+    <h1 class="text-2xl font-semibold m-0">{{ title() }}</h1>
   </header>
   
-  <div class="app-content">
+  <div class="flex-1 p-4 max-w-4xl mx-auto w-full">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <alias-card>
+        <alias-card-header>
+          <alias-card-title>Welcome to Alias</alias-card-title>
+          <alias-card-description>
+            Real-time multiplayer word guessing game with video chat
+          </alias-card-description>
+        </alias-card-header>
+        <alias-card-content>
+          <div class="space-y-2">
+            <alias-button>Join Game</alias-button>
+            <alias-button variant="outline">Create Room</alias-button>
+          </div>
+        </alias-card-content>
+      </alias-card>
+
+      <alias-card>
+        <alias-card-header>
+          <alias-card-title>Game Features</alias-card-title>
+        </alias-card-header>
+        <alias-card-content>
+          <div class="space-y-2">
+            <alias-button variant="secondary" size="sm">WebRTC Video</alias-button>
+            <alias-button variant="ghost" size="sm">Real-time Sync</alias-button>
+            <alias-button variant="link" size="sm">Team Play</alias-button>
+          </div>
+        </alias-card-content>
+      </alias-card>
+      
+      <alias-card>
+        <alias-card-header>
+          <alias-card-title>UI Components</alias-card-title>
+          <alias-card-description>
+            Spartan UI components working with signals
+          </alias-card-description>
+        </alias-card-header>
+        <alias-card-content>
+          <alias-button variant="destructive" size="lg">Test Button</alias-button>
+        </alias-card-content>
+      </alias-card>
+    </div>
+    
     <router-outlet />
   </div>
 </main>
