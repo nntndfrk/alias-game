@@ -21,7 +21,7 @@
         "command": "cargo build",
         "cwd": "backend"
       },
-      "outputs": ["target"]
+      "outputs": ["{projectRoot}/target"]
     },
     "test": {
       "executor": "nx:run-commands",
