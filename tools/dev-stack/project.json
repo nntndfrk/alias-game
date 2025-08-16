@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "dev-stack",
+  "projectType": "utility",
+  "targets": {
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "docker-compose up -d mongodb redis",
+          "nx dev backend",
+          "nx dev frontend"
+        ],
+        "parallel": true,
+        "cwd": ".",
+        "envFile": ".env"
+      }
+    }
+  }
+}

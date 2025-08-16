@@ -33,6 +33,7 @@
     "@types/jasmine": "~5.1.0",
     "angular-eslint": "20.1.1",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9.29.0",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",

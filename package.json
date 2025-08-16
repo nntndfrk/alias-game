@@ -1,0 +1,11 @@
+{
+  "name": "alias-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "nx": "nx"
+  },
+  "devDependencies": {
+    "nx": "^21.4.0"
+  }
+}
