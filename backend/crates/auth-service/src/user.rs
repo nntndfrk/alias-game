@@ -34,11 +34,7 @@ impl UserService {
             user.updated_at = now;
 
             self.collection
-                .replace_one(
-                    doc! { "twitch_id": &twitch_user.id },
-                    &user,
-                    None,
-                )
+                .replace_one(doc! { "twitch_id": &twitch_user.id }, &user, None)
                 .await?;
 
             Ok(user)
@@ -56,10 +52,10 @@ impl UserService {
             };
 
             let result = self.collection.insert_one(&new_user, None).await?;
-            
+
             let mut user = new_user;
             user.id = Some(result.inserted_id.as_object_id().unwrap());
-            
+
             Ok(user)
         }
     }

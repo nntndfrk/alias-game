@@ -31,7 +31,7 @@ impl TwitchClient {
             code,
             redirect_uri
         );
-        
+
         let params = [
             ("client_id", &self.client_id),
             ("client_secret", &self.client_secret),
@@ -58,9 +58,7 @@ impl TwitchClient {
                 redirect_uri
             );
             return Err(AuthError::TwitchApiError(format!(
-                "Failed to exchange code (status: {}): {}",
-                status,
-                error_text
+                "Failed to exchange code (status: {status}): {error_text}"
             )));
         }
 
@@ -74,7 +72,7 @@ impl TwitchClient {
         let response = self
             .client
             .get(TWITCH_USER_API_URL)
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {access_token}"))
             .header("Client-Id", &self.client_id)
             .send()
             .await?;
@@ -82,8 +80,7 @@ impl TwitchClient {
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();
             return Err(AuthError::TwitchApiError(format!(
-                "Failed to get user info: {}",
-                error_text
+                "Failed to get user info: {error_text}"
             )));
         }
 
@@ -97,7 +94,7 @@ impl TwitchClient {
         let response = self
             .client
             .get("https://id.twitch.tv/oauth2/validate")
-            .header("Authorization", format!("Bearer {}", access_token))
+            .header("Authorization", format!("Bearer {access_token}"))
             .send()
             .await?;
 

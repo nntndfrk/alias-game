@@ -1,3 +1,3 @@
-pub mod models;
 pub mod errors;
+pub mod models;
 pub mod types;

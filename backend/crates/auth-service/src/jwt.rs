@@ -36,18 +36,14 @@ impl JwtService {
 
     pub fn verify_token(&self, token: &str) -> Result<JwtClaims, AuthError> {
         let validation = Validation::new(Algorithm::HS256);
-        
+
         decode::<JwtClaims>(token, &self.decoding_key, &validation)
             .map(|data| data.claims)
             .map_err(|e| e.into())
     }
 
     pub fn extract_token_from_header(auth_header: &str) -> Option<&str> {
-        if auth_header.starts_with("Bearer ") {
-            Some(&auth_header[7..])
-        } else {
-            None
-        }
+        auth_header.strip_prefix("Bearer ")
     }
 }
 
@@ -59,7 +55,7 @@ mod tests {
     #[test]
     fn test_jwt_generation_and_verification() {
         let service = JwtService::new("test-secret");
-        
+
         let user = User {
             id: Some(ObjectId::new()),
             twitch_id: "123456".to_string(),

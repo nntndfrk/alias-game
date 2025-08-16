@@ -4,22 +4,22 @@ use thiserror::Error;
 pub enum AuthError {
     #[error("Invalid credentials")]
     InvalidCredentials,
-    
+
     #[error("Invalid token")]
     InvalidToken,
-    
+
     #[error("Token expired")]
     TokenExpired,
-    
+
     #[error("Unauthorized")]
     Unauthorized,
-    
+
     #[error("Twitch API error: {0}")]
     TwitchApiError(String),
-    
+
     #[error("Database error: {0}")]
     DatabaseError(String),
-    
+
     #[error("Internal error: {0}")]
     InternalError(String),
 }
@@ -28,13 +28,13 @@ pub enum AuthError {
 pub enum ApiError {
     #[error("Bad request: {0}")]
     BadRequest(String),
-    
+
     #[error("Not found")]
     NotFound,
-    
+
     #[error("Internal server error")]
     InternalServerError,
-    
+
     #[error("Auth error: {0}")]
     Auth(#[from] AuthError),
 }
