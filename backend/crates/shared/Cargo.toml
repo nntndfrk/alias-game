@@ -19,3 +19,12 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # Database
 mongodb = { version = "2.8", features = ["bson-uuid-1"] }
+
+# HTTP client (for error types)
+reqwest = { version = "0.11", optional = true }
+
+# JWT (for error types)
+jsonwebtoken = { version = "9", optional = true }
+
+[features]
+default = ["reqwest", "jsonwebtoken"]

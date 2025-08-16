@@ -25,11 +25,15 @@ redis = { version = "0.24", features = ["tokio-comp"] }
 # Authentication
 jsonwebtoken = "9"
 
-# Shared crate
+# Internal crates
 shared = { path = "../shared" }
+auth-service = { path = "../auth-service" }
 
 # Configuration
 dotenv = "0.15"
+
+# URL encoding
+urlencoding = "2.1"
 
 # Logging
 tracing = "0.1"

@@ -1,8 +1,8 @@
 # Build stage
-FROM rust:1.75-alpine AS builder
+FROM rust:1.82-alpine AS builder
 
 # Install build dependencies
-RUN apk add --no-cache musl-dev
+RUN apk add --no-cache musl-dev pkgconfig openssl-dev
 
 WORKDIR /app
 
@@ -15,18 +15,25 @@ COPY crates/game-engine/Cargo.toml ./crates/game-engine/
 COPY crates/auth-service/Cargo.toml ./crates/auth-service/
 COPY crates/shared/Cargo.toml ./crates/shared/
 
+# Copy bin manifests
+COPY bin/migrate/Cargo.toml ./bin/migrate/
+COPY bin/seed-words/Cargo.toml ./bin/seed-words/
+
 # Create dummy source files to build dependencies
 RUN mkdir -p crates/api-gateway/src && echo "fn main() {}" > crates/api-gateway/src/main.rs && \
     mkdir -p crates/game-engine/src && echo "" > crates/game-engine/src/lib.rs && \
     mkdir -p crates/auth-service/src && echo "" > crates/auth-service/src/lib.rs && \
-    mkdir -p crates/shared/src && echo "" > crates/shared/src/lib.rs
+    mkdir -p crates/shared/src && echo "" > crates/shared/src/lib.rs && \
+    mkdir -p bin/migrate/src && echo "fn main() {}" > bin/migrate/src/main.rs && \
+    mkdir -p bin/seed-words/src && echo "fn main() {}" > bin/seed-words/src/main.rs
 
 # Build dependencies
 RUN cargo build --release -p api-gateway && \
-    rm -rf crates/*/src
+    rm -rf crates/*/src bin/*/src
 
 # Copy source code
 COPY crates ./crates
+COPY bin ./bin
 
 # Build the application
 RUN cargo build --release -p api-gateway
