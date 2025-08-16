@@ -89,4 +89,4 @@ jobs:
       uses: docker/setup-buildx-action@v3
     
     - name: Build Docker images
-      run: docker-compose build
+      run: docker compose build
