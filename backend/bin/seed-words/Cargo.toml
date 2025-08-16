@@ -1,0 +1,12 @@
+[package]
+name = "seed-words"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mongodb = "2.8"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+dotenv = "0.15"
