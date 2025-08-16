@@ -1,18 +1,29 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { HeaderComponent } from './header.component';
 
 @Component({
   selector: 'alias-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, HeaderComponent],
   template: `
     <div class="min-h-screen bg-background">
       <alias-header [title]="'Alias Game'">
-        <div slot="nav">
-          <a href="/lobby" class="text-sm font-medium hover:text-primary">Lobby</a>
-          <a href="/game" class="text-sm font-medium hover:text-primary">Game</a>
+        <div slot="nav" class="flex space-x-6">
+          <a 
+            routerLink="/" 
+            routerLinkActive="text-primary" 
+            [routerLinkActiveOptions]="{exact: true}"
+            class="text-sm font-medium hover:text-primary transition-colors">
+            Home
+          </a>
+          <a 
+            routerLink="/lobby" 
+            routerLinkActive="text-primary" 
+            class="text-sm font-medium hover:text-primary transition-colors">
+            Lobby
+          </a>
         </div>
         <div slot="actions">
           <ng-content select="[slot=header-actions]"></ng-content>
