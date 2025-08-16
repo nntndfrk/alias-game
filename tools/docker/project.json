@@ -7,8 +7,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "docker compose build",
-        "cwd": ".",
-        "envFile": ".env"
+        "cwd": "."
       }
     }
   }
