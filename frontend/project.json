@@ -17,7 +17,7 @@
         "command": "npm run build",
         "cwd": "frontend"
       },
-      "outputs": ["dist"]
+      "outputs": ["{projectRoot}/dist"]
     },
     "test": {
       "executor": "nx:run-commands",
