@@ -76,6 +76,10 @@ export class AuthService {
       });
   }
 
+  getAuthUrl(): Observable<{ auth_url: string }> {
+    return this.http.get<{ auth_url: string }>(`${this.apiUrl}/login`);
+  }
+
   handleCallback(code: string, redirectUri: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/callback`, { code, redirect_uri: redirectUri })
       .pipe(
