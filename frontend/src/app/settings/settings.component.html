@@ -1,0 +1,136 @@
+<div class="settings-container">
+  <h1>Settings</h1>
+  
+  <div class="settings-section">
+    <h2>Theme</h2>
+    <p>Choose your preferred color theme.</p>
+    
+    <div class="theme-selector">
+      <div class="theme-options">
+        @for (option of themeOptions; track option.value) {
+          <label class="theme-option" [class.active]="currentTheme() === option.value">
+            <input 
+              type="radio" 
+              name="theme" 
+              [value]="option.value"
+              [checked]="currentTheme() === option.value"
+              (change)="onThemeChange(option.value)"
+              class="theme-radio">
+            <span class="theme-label">
+              @if (option.value === 'system') {
+                <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="9" x2="15" y2="9"></line>
+                  <line x1="9" y1="13" x2="15" y2="13"></line>
+                </svg>
+              }
+              @if (option.value === 'light') {
+                <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              }
+              @if (option.value === 'dark') {
+                <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              }
+              {{ option.label }}
+            </span>
+          </label>
+        }
+      </div>
+    </div>
+  </div>
+  
+  <div class="settings-section">
+    <h2>Webcam Test</h2>
+    <p>Test your webcam connection before joining a game.</p>
+    
+    <div class="webcam-test-area">
+      @if (!isTestingCamera()) {
+        <button class="btn btn-primary" (click)="testWebcam()">
+          Test Webcam
+        </button>
+      }
+      
+      @if (isTestingCamera()) {
+        <div class="webcam-preview-container">
+          <video 
+            id="webcam-preview" 
+            autoplay 
+            playsinline 
+            muted
+            class="webcam-preview">
+          </video>
+          <button class="btn btn-secondary" (click)="stopWebcam()">
+            Stop Camera
+          </button>
+        </div>
+      }
+      
+      @if (cameraError()) {
+        <div class="error-message">
+          {{ cameraError() }}
+        </div>
+      }
+    </div>
+  </div>
+  
+  <div class="settings-section">
+    <h2>Microphone Test</h2>
+    <p>Test your microphone by recording a short audio clip (max 10 seconds).</p>
+    
+    <div class="microphone-test-area">
+      @if (!isRecording() && !audioRecorded()) {
+        <button class="btn btn-primary" (click)="startRecording()">
+          Start Recording
+        </button>
+      }
+      
+      @if (isRecording()) {
+        <div class="recording-container">
+          <div class="recording-indicator">
+            <span class="recording-dot"></span>
+            Recording... ({{ recordingTimeLeft() }}s)
+          </div>
+          <button class="btn btn-secondary" (click)="stopRecording()">
+            Stop Recording
+          </button>
+        </div>
+      }
+      
+      @if (audioRecorded()) {
+        <div class="audio-playback-container">
+          <audio 
+            id="audio-playback" 
+            [src]="audioUrl()" 
+            controls
+            class="audio-player">
+          </audio>
+          <div class="audio-controls">
+            <button class="btn btn-primary" (click)="playAudio()">
+              Play Recording
+            </button>
+            <button class="btn btn-secondary" (click)="deleteRecording()">
+              Delete Recording
+            </button>
+          </div>
+        </div>
+      }
+      
+      @if (microphoneError()) {
+        <div class="error-message">
+          {{ microphoneError() }}
+        </div>
+      }
+    </div>
+  </div>
+</div>

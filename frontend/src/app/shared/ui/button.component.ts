@@ -1,4 +1,4 @@
-import { Component, Input, signal, computed } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
@@ -11,34 +11,18 @@ export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
   template: `
     <button 
       [class]="buttonClasses()"
-      [disabled]="isDisabled()"
-      [type]="type">
+      [disabled]="disabled()"
+      [type]="type()">
       <ng-content></ng-content>
     </button>
   `
+
 })
 export class ButtonComponent {
-  @Input() set variant(value: ButtonVariant) {
-    this._variant.set(value);
-  }
-  
-  @Input() set size(value: ButtonSize) {
-    this._size.set(value);
-  }
-  
-  @Input() set disabled(value: boolean | string) {
-    this._disabled.set(value === '' || value === true);
-  }
-  
-  @Input() type: 'button' | 'submit' | 'reset' = 'button';
-  
-  private _variant = signal<ButtonVariant>('default');
-  private _size = signal<ButtonSize>('default');
-  private _disabled = signal(false);
-  
-  currentVariant = this._variant.asReadonly();
-  currentSize = this._size.asReadonly();
-  isDisabled = this._disabled.asReadonly();
+  variant = input<ButtonVariant>('default');
+  size = input<ButtonSize>('default');
+  disabled = input<boolean>(false);
+  type = input<'button' | 'submit' | 'reset'>('button');
   
   buttonClasses = computed(() => {
     const baseClasses = 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
@@ -59,6 +43,6 @@ export class ButtonComponent {
       icon: 'h-10 w-10'
     };
     
-    return `${baseClasses} ${variantClasses[this.currentVariant()]} ${sizeClasses[this.currentSize()]}`;
+    return `${baseClasses} ${variantClasses[this.variant()]} ${sizeClasses[this.size()]}`;
   });
 }

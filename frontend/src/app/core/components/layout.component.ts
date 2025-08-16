@@ -24,6 +24,12 @@ import { HeaderComponent } from './header.component';
             class="text-sm font-medium hover:text-primary transition-colors">
             Lobby
           </a>
+          <a 
+            routerLink="/settings" 
+            routerLinkActive="text-primary" 
+            class="text-sm font-medium hover:text-primary transition-colors">
+            Settings
+          </a>
         </div>
         <div slot="actions">
           <ng-content select="[slot=header-actions]"></ng-content>

@@ -1,4 +1,4 @@
-import { Component, Input, signal, inject } from '@angular/core';
+import { Component, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ButtonComponent } from '@shared/ui';
@@ -13,7 +13,7 @@ import { AuthService } from '../../features/auth/auth.service';
       <div class="container flex h-16 items-center justify-between px-4">
         <div class="flex items-center space-x-4">
           <a routerLink="/" class="text-xl font-bold hover:text-primary transition-colors">
-            {{ currentTitle() }}
+            {{ title() }}
           </a>
           <nav class="hidden md:flex space-x-6">
             <ng-content select="[slot=nav]"></ng-content>
@@ -40,12 +40,7 @@ import { AuthService } from '../../features/auth/auth.service';
   `
 })
 export class HeaderComponent {
-  @Input() set title(value: string) {
-    this._title.set(value);
-  }
+  title = input('Alias Game');
   
   protected readonly authService = inject(AuthService);
-  
-  private _title = signal('Alias Game');
-  currentTitle = this._title.asReadonly();
 }

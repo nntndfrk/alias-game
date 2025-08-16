@@ -26,6 +26,11 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'settings',
+    loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/'
   }
