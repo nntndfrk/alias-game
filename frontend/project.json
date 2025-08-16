@@ -22,7 +22,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm test -- --watch=false",
+        "command": "npm test -- --watch=false --browsers=ChromeHeadless",
         "cwd": "frontend"
       }
     },
