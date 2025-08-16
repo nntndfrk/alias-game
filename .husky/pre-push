@@ -1,0 +1,53 @@
+#!/bin/sh
+
+echo "🚀 Running pre-push checks..."
+
+# Check if we're in the right directory
+if [ ! -f "package.json" ]; then
+    echo "❌ Must be run from project root"
+    exit 1
+fi
+
+# Frontend checks
+echo "📦 Frontend: Running type check..."
+cd frontend
+if ! npm run typecheck; then
+    echo "❌ Frontend type check failed"
+    exit 1
+fi
+
+echo "🔍 Frontend: Running linter..."
+if ! npm run lint; then
+    echo "❌ Frontend linting failed"
+    exit 1
+fi
+
+echo "🧪 Frontend: Running tests..."
+if ! npm test -- --watch=false --browsers=ChromeHeadless; then
+    echo "❌ Frontend tests failed"
+    exit 1
+fi
+
+cd ..
+
+# Backend checks
+echo "🦀 Backend: Running format check..."
+cd backend
+if ! cargo fmt --check; then
+    echo "❌ Backend format check failed. Run 'cargo fmt' to fix."
+    exit 1
+fi
+
+echo "📋 Backend: Running clippy..."
+if ! cargo clippy -- -D warnings; then
+    echo "❌ Backend clippy check failed"
+    exit 1
+fi
+
+echo "🧪 Backend: Running tests..."
+if ! cargo test; then
+    echo "❌ Backend tests failed"
+    exit 1
+fi
+
+echo "✅ All pre-push checks passed!"

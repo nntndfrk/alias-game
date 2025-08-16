@@ -3,9 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "nx": "nx"
+    "nx": "nx",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "nx": "^21.4.0"
+    "nx": "^21.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,js,html,css,scss}": [
+      "cd frontend && npm run lint --fix",
+      "cd frontend && npm run typecheck"
+    ],
+    "backend/**/*.rs": [
+      "cd backend && cargo fmt",
+      "cd backend && cargo clippy --fix --allow-dirty"
+    ]
   }
 }
