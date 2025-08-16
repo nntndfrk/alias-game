@@ -21,15 +21,16 @@ import { ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent
           <alias-card-content>
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium mb-2">Room Name</label>
+                <label for="room-name" class="block text-sm font-medium mb-2">Room Name</label>
                 <input 
+                  id="room-name"
                   type="text" 
                   placeholder="Enter room name..." 
                   class="w-full px-3 py-2 border rounded-md">
               </div>
               <div>
-                <label class="block text-sm font-medium mb-2">Max Players</label>
-                <select class="w-full px-3 py-2 border rounded-md">
+                <label for="max-players" class="block text-sm font-medium mb-2">Max Players</label>
+                <select id="max-players" class="w-full px-3 py-2 border rounded-md">
                   <option value="6">6 Players</option>
                   <option value="8">8 Players</option>
                   <option value="10">10 Players</option>
@@ -47,8 +48,9 @@ import { ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent
           <alias-card-content>
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium mb-2">Room Code</label>
+                <label for="room-code" class="block text-sm font-medium mb-2">Room Code</label>
                 <input 
+                  id="room-code"
                   type="text" 
                   placeholder="Enter room code..." 
                   class="w-full px-3 py-2 border rounded-md">

@@ -58,7 +58,7 @@ export class AuthService {
           token,
           isAuthenticated: true
         });
-      } catch (error) {
+      } catch {
         this.clearAuthState();
       }
     }
@@ -92,7 +92,7 @@ export class AuthService {
         catchError(error => {
           console.error('Auth callback failed:', error);
           this.clearAuthState();
-          return of(null as any);
+          return of(null as unknown as LoginResponse);
         })
       );
   }
@@ -113,7 +113,7 @@ export class AuthService {
     localStorage.removeItem(this.userKey);
   }
 
-  getCurrentUser(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/me`);
+  getCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/me`);
   }
 }
