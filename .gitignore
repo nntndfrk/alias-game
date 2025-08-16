@@ -15,7 +15,6 @@ lerna-debug.log*
 # Rust
 /backend/target/
 /backend/**/*.rs.bk
-/backend/Cargo.lock
 
 # IDEs and editors
 .idea/
