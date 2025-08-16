@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
@@ -53,10 +53,10 @@ import { ActivatedRoute } from '@angular/router';
   `
 })
 export class AuthCallbackComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  
   isLoading = true;
   error: string | null = null;
-
-  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {

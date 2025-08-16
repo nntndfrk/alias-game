@@ -9,7 +9,7 @@ import { ButtonComponent } from './button.component';
   template: `
     @if (isOpen()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="onBackdropClick($event)" tabindex="-1" role="button" (keydown.escape)="close()">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" tabindex="-1">
           <!-- Header -->
           <div class="flex items-center justify-between p-6 border-b">
             <h2 class="text-xl font-semibold">{{ title() }}</h2>

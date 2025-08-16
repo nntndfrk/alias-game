@@ -175,7 +175,7 @@ export class OAuthModalComponent {
             this.error.set('Authentication failed: No authorization code received.');
           }
         }
-      } catch (e) {
+      } catch {
         // Cross-origin error - popup is still on Twitch domain, continue polling
       }
     }, 1000);
