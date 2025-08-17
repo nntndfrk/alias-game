@@ -62,6 +62,11 @@ logs/
 /backend/tarpaulin-report.html
 .nyc_output
 
+# Playwright
+/frontend/playwright-report/
+/frontend/test-results/
+/frontend/playwright/.cache/
+
 # Temporary files
 *.tmp
 *.temp
