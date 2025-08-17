@@ -1,9 +1,12 @@
+use auth_service::AuthService;
 use axum::{
     extract::{Request, State},
     middleware::Next,
     response::Response,
 };
 use shared::errors::AuthError;
+use shared::models::User;
+use std::sync::Arc;
 
 use crate::{error::AppError, AppState};
 
@@ -44,4 +47,20 @@ pub async fn auth_middleware(
     req.extensions_mut().insert(user);
 
     Ok(next.run(req).await)
+}
+
+// Extract user from JWT token for WebSocket authentication
+pub async fn extract_user_from_token(
+    token: &str,
+    auth_service: &Arc<AuthService>,
+) -> Result<User, AuthError> {
+    let claims = auth_service.verify_token(token)?;
+
+    // Get user from database
+    let user = auth_service
+        .get_user_by_id(&claims.sub)
+        .await?
+        .ok_or(AuthError::Unauthorized)?;
+
+    Ok(user)
 }

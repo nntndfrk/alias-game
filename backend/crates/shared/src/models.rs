@@ -173,21 +173,61 @@ pub struct RoomInfo {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum WebSocketMessage {
     // Client to server
+    Authenticate { token: String },
+    RequestRoomList,
     JoinRoom { room_code: String },
     LeaveRoom,
+    KickPlayer { user_id: String },
     UpdateRole { user_id: String, role: UserRole },
     StartGame,
     PauseGame,
     ResumeGame,
 
     // Server to client
+    Authenticated { user: UserInfo },
+    RoomList { rooms: Vec<RoomInfo> },
     RoomJoined { room: GameRoom },
     RoomUpdated { room: GameRoom },
+    RoomCreated { room_info: RoomInfo },
+    RoomDeleted { room_code: String },
+    RoomInfoUpdated { room_info: RoomInfo },
     UserJoined { participant: RoomParticipant },
     UserLeft { user_id: String },
+    UserKicked { user_id: String, kicked_by: String },
     RoleUpdated { user_id: String, role: UserRole },
     GameStarted,
     GamePaused,
     GameResumed,
     Error { message: String },
+}
+
+impl WebSocketMessage {
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            WebSocketMessage::Authenticate { .. } => "authenticate",
+            WebSocketMessage::RequestRoomList => "request_room_list",
+            WebSocketMessage::JoinRoom { .. } => "join_room",
+            WebSocketMessage::LeaveRoom => "leave_room",
+            WebSocketMessage::KickPlayer { .. } => "kick_player",
+            WebSocketMessage::UpdateRole { .. } => "update_role",
+            WebSocketMessage::StartGame => "start_game",
+            WebSocketMessage::PauseGame => "pause_game",
+            WebSocketMessage::ResumeGame => "resume_game",
+            WebSocketMessage::Authenticated { .. } => "authenticated",
+            WebSocketMessage::RoomList { .. } => "room_list",
+            WebSocketMessage::RoomJoined { .. } => "room_joined",
+            WebSocketMessage::RoomUpdated { .. } => "room_updated",
+            WebSocketMessage::RoomCreated { .. } => "room_created",
+            WebSocketMessage::RoomDeleted { .. } => "room_deleted",
+            WebSocketMessage::RoomInfoUpdated { .. } => "room_info_updated",
+            WebSocketMessage::UserJoined { .. } => "user_joined",
+            WebSocketMessage::UserLeft { .. } => "user_left",
+            WebSocketMessage::UserKicked { .. } => "user_kicked",
+            WebSocketMessage::RoleUpdated { .. } => "role_updated",
+            WebSocketMessage::GameStarted => "game_started",
+            WebSocketMessage::GamePaused => "game_paused",
+            WebSocketMessage::GameResumed => "game_resumed",
+            WebSocketMessage::Error { .. } => "error",
+        }
+    }
 }

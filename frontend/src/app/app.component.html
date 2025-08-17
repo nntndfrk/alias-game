@@ -1,2 +1,10 @@
 <alias-layout>
 </alias-layout>
+
+<!-- Global Kick Notification Modal -->
+@if (showKickModal()) {
+  <alias-kicked-player-modal
+    [kickData]="kickData()"
+    (acknowledged)="onKickAcknowledged()"
+  />
+}

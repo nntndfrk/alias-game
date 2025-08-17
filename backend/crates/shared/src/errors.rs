@@ -32,6 +32,9 @@ pub enum ApiError {
     #[error("Not found")]
     NotFound,
 
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
     #[error("Internal server error")]
     InternalServerError,
 

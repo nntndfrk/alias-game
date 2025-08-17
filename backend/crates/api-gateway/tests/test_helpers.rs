@@ -22,7 +22,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 // Import from the lib.rs
 use api_gateway::error::AppError;
-use api_gateway::AppState;
+use api_gateway::{websocket::WebSocketManager, AppState};
 
 /// Test user storage for custom auth middleware
 static TEST_USERS: std::sync::OnceLock<Arc<RwLock<HashMap<String, User>>>> =
@@ -128,6 +128,7 @@ pub async fn create_test_app_with_mock_auth() -> Router {
         mongo_client,
         auth_service,
         rooms: Arc::new(RwLock::new(HashMap::new())),
+        websocket_manager: Arc::new(WebSocketManager::new()),
     };
 
     // Create a custom router with test auth middleware

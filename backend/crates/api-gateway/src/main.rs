@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use api_gateway::{create_router, AppState};
+use api_gateway::{create_router, websocket::WebSocketManager, AppState};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -63,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         mongo_client,
         auth_service,
         rooms: Arc::new(RwLock::new(HashMap::new())),
+        websocket_manager: Arc::new(WebSocketManager::new()),
     };
 
     let app = create_router(app_state);

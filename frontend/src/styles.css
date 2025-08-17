@@ -75,3 +75,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .bg-primary-10 {
+    background-color: rgb(from var(--primary) r g b / 0.1);
+  }
+}

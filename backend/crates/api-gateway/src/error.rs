@@ -18,6 +18,10 @@ impl AppError {
         AppError(ApiError::NotFound)
     }
 
+    pub fn forbidden(msg: String) -> Self {
+        AppError(ApiError::Forbidden(msg))
+    }
+
     pub fn unauthorized() -> Self {
         AppError(ApiError::Auth(AuthError::Unauthorized))
     }
@@ -40,6 +44,7 @@ impl IntoResponse for AppError {
         let (status, message) = match self.0 {
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             ApiError::NotFound => (StatusCode::NOT_FOUND, "Not found".to_string()),
+            ApiError::Forbidden(msg) => (StatusCode::FORBIDDEN, msg),
             ApiError::InternalServerError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),

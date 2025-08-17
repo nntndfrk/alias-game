@@ -1,7 +1,7 @@
 use auth_service::AuthService;
 use axum::{
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
     middleware::from_fn_with_state,
     response::IntoResponse,
     routing::{get, post},
@@ -20,6 +20,7 @@ pub mod error;
 pub mod rooms;
 #[cfg(debug_assertions)]
 mod test_utils;
+pub mod websocket;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -29,6 +30,7 @@ pub struct AppState {
     pub mongo_client: Arc<mongodb::Client>,
     pub auth_service: Arc<AuthService>,
     pub rooms: Arc<RwLock<HashMap<String, GameRoom>>>,
+    pub websocket_manager: Arc<websocket::WebSocketManager>,
 }
 
 #[derive(Serialize)]
@@ -45,7 +47,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/api/v1/auth/login", get(login))
         .route("/api/v1/auth/callback", post(auth_callback))
         .route("/api/v1/auth/me", get(get_current_user))
-        .route("/ws", get(websocket_placeholder))
+        .route("/ws", get(websocket::websocket_handler))
         // Public room routes (no auth required)
         .route("/api/v1/rooms", get(rooms::list_rooms))
         .route("/api/v1/rooms/:room_code", get(rooms::get_room));
@@ -65,6 +67,7 @@ pub fn create_router(app_state: AppState) -> Router {
                 .route("/", post(rooms::create_room))
                 .route("/:room_code/join", post(rooms::join_room))
                 .route("/:room_code/leave", post(rooms::leave_room))
+                .route("/:room_code/kick/:player_id", post(rooms::kick_player))
                 .route_layer(from_fn_with_state(
                     app_state.clone(),
                     auth_middleware::auth_middleware,
@@ -158,11 +161,4 @@ async fn get_current_user(
         username: claims.username,
         twitch_id: claims.twitch_id,
     }))
-}
-
-async fn websocket_placeholder() -> impl IntoResponse {
-    (
-        StatusCode::NOT_IMPLEMENTED,
-        "WebSocket endpoint not implemented",
-    )
 }

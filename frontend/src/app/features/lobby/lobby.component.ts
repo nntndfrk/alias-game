@@ -1,8 +1,11 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent } from '@shared/ui';
 import { RoomService } from './room.service';
+import { WebSocketService } from '../../core/services/websocket.service';
+import { Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 
 @Component({
   selector: 'alias-lobby',
@@ -95,8 +98,11 @@ import { RoomService } from './room.service';
     </div>
   `
 })
-export class LobbyComponent implements OnInit {
+export class LobbyComponent implements OnInit, OnDestroy {
   private readonly roomService = inject(RoomService);
+  private readonly wsService = inject(WebSocketService);
+  private authSubscription?: Subscription;
+  private authCheckTimeout?: ReturnType<typeof setTimeout>;
   
   // Form inputs
   roomName = '';
@@ -112,8 +118,92 @@ export class LobbyComponent implements OnInit {
   readonly rooms = this.roomService.rooms;
   
   ngOnInit(): void {
-    // Load available rooms
-    this.roomService.listRooms().subscribe();
+    console.log('[LobbyComponent] Initializing...');
+    
+    // Load rooms immediately via HTTP to show something quickly
+    this.roomService.listRooms().subscribe({
+      next: (rooms) => {
+        console.log('[LobbyComponent] Initial HTTP room list loaded:', rooms.length, 'rooms');
+      }
+    });
+    
+    // Connect to WebSocket for real-time updates
+    this.wsService.connect();
+    
+    // Listen for authentication success
+    this.setupAuthenticationListener();
+    
+    // Also try immediate request in case already authenticated
+    if (this.wsService.isAuthenticated()) {
+      console.log('[LobbyComponent] Already authenticated, requesting room list via WebSocket');
+      this.wsService.requestRoomList();
+    } else {
+      // Fallback with timeout
+      this.waitForAuthAndRequestRooms();
+    }
+  }
+  
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
+    if (this.authCheckTimeout) {
+      clearTimeout(this.authCheckTimeout);
+    }
+  }
+  
+  private setupAuthenticationListener(): void {
+    // Listen for authentication messages
+    this.authSubscription = this.wsService.messages$
+      .pipe(
+        filter(msg => msg.type === 'authenticated'),
+        take(1) // Only need the first authentication
+      )
+      .subscribe(() => {
+        console.log('[LobbyComponent] Received authentication message, requesting room list');
+        // Small delay to ensure everything is set up
+        setTimeout(() => {
+          this.wsService.requestRoomList();
+        }, 100);
+      });
+  }
+  
+  private waitForAuthAndRequestRooms(): void {
+    let checkCount = 0;
+    const maxChecks = 100; // 10 seconds max (100 * 100ms)
+    
+    const checkAuth = () => {
+      checkCount++;
+      
+      // First check if WebSocket is connected
+      if (!this.wsService.isConnected()) {
+        console.log('[LobbyComponent] Waiting for WebSocket connection...', checkCount);
+        if (checkCount < maxChecks) {
+          this.authCheckTimeout = setTimeout(checkAuth, 100);
+        } else {
+          console.error('[LobbyComponent] WebSocket connection timeout');
+          // Fallback to HTTP request
+          console.log('[LobbyComponent] Falling back to HTTP request for room list');
+          this.roomService.listRooms().subscribe();
+        }
+        return;
+      }
+      
+      // Then check if authenticated
+      if (this.wsService.isAuthenticated()) {
+        console.log('[LobbyComponent] Authenticated after', checkCount, 'checks, requesting room list');
+        this.wsService.requestRoomList();
+      } else if (checkCount < maxChecks) {
+        console.log('[LobbyComponent] Waiting for authentication...', checkCount);
+        this.authCheckTimeout = setTimeout(checkAuth, 100);
+      } else {
+        console.error('[LobbyComponent] Authentication timeout after', checkCount, 'checks');
+        // Fallback to HTTP request
+        console.log('[LobbyComponent] Falling back to HTTP request for room list');
+        this.roomService.listRooms().subscribe();
+      }
+    };
+    
+    // Start checking
+    checkAuth();
   }
   
   createRoom(): void {

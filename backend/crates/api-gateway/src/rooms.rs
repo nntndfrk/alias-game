@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 use shared::models::{
     CreateRoomRequest, CreateRoomResponse, GameRoom, RoomInfo, RoomParticipant, RoomState, User,
-    UserRole,
+    UserRole, WebSocketMessage,
 };
 
 use crate::error::AppError;
@@ -84,6 +84,28 @@ pub async fn create_room(
     let mut rooms = state.rooms.write().await;
     rooms.insert(room_code.clone(), room.clone());
 
+    // Create RoomInfo for the broadcast
+    let room_info = RoomInfo {
+        id: room_id.to_hex(),
+        room_code: room_code.clone(),
+        name: req.name.clone(),
+        current_players: 1,
+        max_players: req.max_players,
+        state: RoomState::Waiting,
+        admin_username: user.username.clone(),
+    };
+
+    // Broadcast room creation to all connected clients in the lobby
+    state
+        .websocket_manager
+        .broadcast_to_lobby(WebSocketMessage::RoomCreated { room_info });
+
+    tracing::info!(
+        "Room {} created by user {} and broadcast to lobby",
+        room_code,
+        user_id
+    );
+
     Ok(Json(CreateRoomResponse {
         room_id: room_id.to_hex(),
         room_code,
@@ -112,6 +134,11 @@ pub async fn join_room(
 
     // Check if user is already in the room
     if room.participants.contains_key(&user_id) {
+        // Mark as connected if they're rejoining
+        if let Some(participant) = room.participants.get_mut(&user_id) {
+            participant.is_connected = true;
+            room.updated_at = Utc::now();
+        }
         return Ok(Json(room.clone()));
     }
 
@@ -127,8 +154,53 @@ pub async fn join_room(
         joined_at: Utc::now(),
     };
 
-    room.participants.insert(user_id.clone(), participant);
+    room.participants
+        .insert(user_id.clone(), participant.clone());
     room.updated_at = Utc::now();
+
+    tracing::info!(
+        "User {} joined room {}. Broadcasting to WebSocket subscribers",
+        user_id,
+        room_code
+    );
+
+    // Broadcast user joined message via WebSocket
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::UserJoined {
+                participant: participant.clone(),
+            },
+        )
+        .await;
+
+    // Broadcast updated room state (this ensures all clients get the full state)
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::RoomUpdated { room: room.clone() },
+        )
+        .await;
+
+    // Broadcast updated room info to lobby
+    let room_info = RoomInfo {
+        id: room.id.unwrap().to_hex(),
+        room_code: room_code.clone(),
+        name: room.name.clone(),
+        current_players: room.participants.len(),
+        max_players: room.max_players,
+        state: room.state,
+        admin_username: room
+            .participants
+            .get(&room.admin_id)
+            .map(|p| p.username.clone())
+            .unwrap_or_default(),
+    };
+    state
+        .websocket_manager
+        .broadcast_to_lobby(WebSocketMessage::RoomInfoUpdated { room_info });
 
     tracing::info!(
         "User {} joined room {}. Total participants: {}",
@@ -205,17 +277,114 @@ pub async fn leave_room(
     room.participants.remove(&user_id);
     room.updated_at = Utc::now();
 
+    // Broadcast user left message
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::UserLeft {
+                user_id: user_id.clone(),
+            },
+        )
+        .await;
+
     // If admin leaves, transfer admin role or delete room if empty
     if room.admin_id == user_id {
         if let Some((new_admin_id, participant)) = room.participants.iter_mut().next() {
             // Transfer admin role to another participant
             participant.role = UserRole::Admin;
             room.admin_id = new_admin_id.clone();
+
+            // Broadcast role update
+            state
+                .websocket_manager
+                .broadcast_to_room(
+                    &room_code,
+                    WebSocketMessage::RoleUpdated {
+                        user_id: new_admin_id.clone(),
+                        role: UserRole::Admin,
+                    },
+                )
+                .await;
         } else {
             // Remove empty room
             rooms.remove(&room_code);
+            state.websocket_manager.remove_room(&room_code).await;
+            return Ok(StatusCode::OK);
         }
     }
+
+    // Broadcast updated room state
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::RoomUpdated { room: room.clone() },
+        )
+        .await;
+
+    Ok(StatusCode::OK)
+}
+
+/// Kick a player from the room (admin only)
+pub async fn kick_player(
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Path((room_code, player_id)): Path<(String, String)>,
+) -> Result<StatusCode, AppError> {
+    let admin_id = user.id.unwrap().to_hex();
+    let mut rooms = state.rooms.write().await;
+
+    let room = rooms
+        .get_mut(&room_code)
+        .ok_or_else(|| AppError::not_found("Room not found".into()))?;
+
+    // Check if the user is the admin
+    if room.admin_id != admin_id {
+        return Err(AppError::forbidden("Only admin can kick players".into()));
+    }
+
+    // Check if the player exists in the room
+    if !room.participants.contains_key(&player_id) {
+        return Err(AppError::not_found("Player not found in room".into()));
+    }
+
+    // Cannot kick the admin themselves
+    if player_id == admin_id {
+        return Err(AppError::bad_request("Admin cannot kick themselves".into()));
+    }
+
+    // Remove the player
+    room.participants.remove(&player_id);
+    room.updated_at = Utc::now();
+
+    // Broadcast kick notification
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::UserKicked {
+                user_id: player_id.to_string(),
+                kicked_by: admin_id.clone(),
+            },
+        )
+        .await;
+
+    // Broadcast updated room state
+    state
+        .websocket_manager
+        .broadcast_to_room(
+            &room_code,
+            WebSocketMessage::RoomUpdated { room: room.clone() },
+        )
+        .await;
+
+    tracing::info!(
+        "Admin {} kicked player {} from room {}",
+        admin_id,
+        player_id,
+        room_code
+    );
 
     Ok(StatusCode::OK)
 }
