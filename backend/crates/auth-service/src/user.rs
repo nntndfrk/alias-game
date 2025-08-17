@@ -1,5 +1,5 @@
 use chrono::Utc;
-use mongodb::{bson::doc, Collection, Database};
+use mongodb::{bson::{doc, oid::ObjectId}, Collection, Database};
 use shared::errors::AuthError;
 use shared::models::{TwitchUser, User};
 
@@ -58,5 +58,15 @@ impl UserService {
 
             Ok(user)
         }
+    }
+
+    pub async fn get_by_id(&self, user_id: &str) -> Result<Option<User>, AuthError> {
+        let object_id = ObjectId::parse_str(user_id)
+            .map_err(|_| AuthError::InvalidCredentials)?;
+        
+        self.collection
+            .find_one(doc! { "_id": object_id }, None)
+            .await
+            .map_err(|e| e.into())
     }
 }

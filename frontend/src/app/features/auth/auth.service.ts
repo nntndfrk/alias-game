@@ -8,6 +8,7 @@ export interface User {
   username: string;
   display_name: string;
   profile_image_url?: string;
+  role?: 'admin' | 'player'; // Current role in active room
 }
 
 export interface LoginResponse {

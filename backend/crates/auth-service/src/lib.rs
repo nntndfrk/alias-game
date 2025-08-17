@@ -59,4 +59,8 @@ impl AuthService {
     pub fn verify_token(&self, token: &str) -> Result<shared::models::JwtClaims, AuthError> {
         self.jwt_service.verify_token(token)
     }
+
+    pub async fn get_user_by_id(&self, user_id: &str) -> Result<Option<shared::models::User>, AuthError> {
+        self.user_service.get_by_id(user_id).await
+    }
 }
