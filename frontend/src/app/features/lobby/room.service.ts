@@ -29,7 +29,7 @@ export interface GameRoom {
   max_players: number;
   created_at: string;
   updated_at: string;
-  game_data?: any;
+  game_data?: Record<string, unknown>;
 }
 
 export interface CreateRoomRequest {

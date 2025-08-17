@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, effect, computed } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent } from '@shared/ui';
-import { RoomService } from '../lobby/room.service';
+import { RoomService, type RoomParticipant } from '../lobby/room.service';
 import { AuthService } from '../auth/auth.service';
 
 @Component({
@@ -132,7 +132,7 @@ export class RoomComponent implements OnInit {
   readonly userRole = this.roomService.userRole;
   readonly currentUserId = computed(() => this.authService.user()?.id || '');
   
-  readonly participants = signal<any[]>([]);
+  readonly participants = signal<RoomParticipant[]>([]);
   readonly participantCount = signal(0);
   
   constructor() {
