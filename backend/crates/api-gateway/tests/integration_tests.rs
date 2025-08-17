@@ -192,9 +192,9 @@ async fn test_room_join_full_room() {
 
     // Fill the room with 3 more players
     for i in 1..4 {
-        let test_app = create_test_app().await;
-        let token = create_test_user(&test_app, &format!("player_{}", i)).await;
-        let response = test_app
+        let token = create_test_user(&app, &format!("player_{}", i)).await;
+        let response = app
+            .clone()
             .oneshot(
                 Request::builder()
                     .method(Method::POST)
@@ -209,9 +209,8 @@ async fn test_room_join_full_room() {
     }
 
     // Try to add one more player (should fail)
-    let extra_token = create_test_user(&create_test_app().await, "extra_player").await;
-    let app_clone = create_test_app().await;
-    let response = app_clone
+    let extra_token = create_test_user(&app, "extra_player").await;
+    let response = app
         .clone()
         .oneshot(
             Request::builder()

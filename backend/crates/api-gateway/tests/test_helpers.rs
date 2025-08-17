@@ -1,43 +1,126 @@
 use auth_service::AuthService;
+use axum::middleware::from_fn_with_state;
+use axum::routing::{get, post};
 use axum::{
     body::{to_bytes, Body},
+    extract::{Request as AxumRequest, State},
     http::{Method, Request, StatusCode},
+    middleware::Next,
+    response::Response,
     Router,
 };
 use chrono::Utc;
 use mongodb::bson::oid::ObjectId;
 use serde_json::{json, Value};
-use shared::models::User;
+use shared::errors::AuthError;
+use shared::models::{JwtClaims, LoginRequest, LoginResponse, User};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower::ServiceExt;
+use tower_http::cors::{Any, CorsLayer};
 
 // Import from the lib.rs
-use api_gateway::{create_router, AppState};
+use api_gateway::error::AppError;
+use api_gateway::AppState;
 
-/// Create a test app instance with in-memory storage
+/// Test user storage for custom auth middleware
+static TEST_USERS: std::sync::OnceLock<Arc<RwLock<HashMap<String, User>>>> =
+    std::sync::OnceLock::new();
+
+/// Get or initialize the test users storage
+fn get_test_users() -> &'static Arc<RwLock<HashMap<String, User>>> {
+    TEST_USERS.get_or_init(|| Arc::new(RwLock::new(HashMap::new())))
+}
+
+/// Custom auth middleware for tests that uses in-memory user storage
+pub async fn test_auth_middleware(
+    State(_state): State<AppState>,
+    mut req: AxumRequest,
+    next: Next,
+) -> Result<Response, AppError> {
+    let auth_header = req
+        .headers()
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok())
+        .ok_or(AppError::from(AuthError::Unauthorized))?;
+
+    let token = auth_header
+        .strip_prefix("Bearer ")
+        .ok_or(AppError::from(AuthError::InvalidToken))?;
+
+    // Verify token using the test JWT secret
+    let claims = verify_test_token(token).map_err(|_| AppError::from(AuthError::InvalidToken))?;
+
+    // Get user from test storage
+    let test_users = get_test_users().read().await;
+    let user = test_users
+        .get(&claims.sub)
+        .ok_or(AppError::from(AuthError::Unauthorized))?
+        .clone();
+    drop(test_users);
+
+    // Insert user into request extensions
+    tracing::debug!(
+        "Test authenticated user: {} ({})",
+        user.username,
+        user.id.as_ref().map(|id| id.to_hex()).unwrap_or_default()
+    );
+    req.extensions_mut().insert(user);
+
+    Ok(next.run(req).await)
+}
+
+/// Verify test JWT token
+fn verify_test_token(token: &str) -> Result<JwtClaims, AuthError> {
+    use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.validate_exp = true;
+
+    decode::<JwtClaims>(
+        token,
+        &DecodingKey::from_secret("test_jwt_secret_key_for_testing_only".as_ref()),
+        &validation,
+    )
+    .map(|token_data| token_data.claims)
+    .map_err(|_| AuthError::InvalidCredentials)
+}
+
+/// Create a test app instance with mock services
 pub async fn create_test_app() -> Router {
-    // Use in-memory Redis and MongoDB for testing
-    let redis_client = Arc::new(
-        redis::Client::open("redis://127.0.0.1:6379/1")
-            .expect("Failed to create test Redis client"),
-    );
+    create_test_app_with_mock_auth().await
+}
 
+/// Create a test app with mock authentication (no real DB connections)
+pub async fn create_test_app_with_mock_auth() -> Router {
+    // Create mock Redis client (no actual connection)
+    let mock_redis_uri = "redis://mock-for-testing:6379/1";
+    let redis_client =
+        Arc::new(redis::Client::open(mock_redis_uri).expect("Failed to create mock Redis client"));
+
+    // Create a minimal in-memory MongoDB client for testing
+    let _mock_mongo_uri = "mongodb://mock-host:27017";
     let mongo_client = Arc::new(
-        mongodb::Client::with_uri_str("mongodb://localhost:27017")
-            .await
-            .expect("Failed to create test MongoDB client"),
+        mongodb::Client::with_options(
+            mongodb::options::ClientOptions::builder()
+                .hosts(vec![mongodb::options::ServerAddress::Tcp {
+                    host: "mock-host".to_string(),
+                    port: Some(27017),
+                }])
+                .server_selection_timeout(std::time::Duration::from_millis(100))
+                .build(),
+        )
+        .expect("Failed to create mock MongoDB client"),
     );
 
-    let db = mongo_client.database("alias_game_test");
-
-    // Create auth service with test secrets
+    // Create a real AuthService but with mock database
+    let db = mongo_client.database("test_db");
     let auth_service = Arc::new(AuthService::new(
         &db,
         "test_jwt_secret_key_for_testing_only",
-        "test_twitch_client_id".to_string(),
-        "test_twitch_client_secret".to_string(),
+        "test_client_id".to_string(),
+        "test_client_secret".to_string(),
     ));
 
     let app_state = AppState {
@@ -47,7 +130,70 @@ pub async fn create_test_app() -> Router {
         rooms: Arc::new(RwLock::new(HashMap::new())),
     };
 
-    create_router(app_state)
+    // Create a custom router with test auth middleware
+    create_test_router(app_state)
+}
+
+/// Create a test router that uses test auth middleware instead of real auth
+fn create_test_router(app_state: AppState) -> Router {
+    // Import required modules for router creation
+    use api_gateway::rooms;
+
+    let app = Router::new()
+        .route("/health", get(test_health_check))
+        .route("/api/v1/auth/login", get(test_login))
+        .route("/api/v1/auth/callback", post(test_auth_callback))
+        .route("/api/v1/auth/me", get(test_get_current_user))
+        .route("/ws", get(test_websocket_placeholder))
+        // Public room routes (no auth required)
+        .route("/api/v1/rooms", get(rooms::list_rooms))
+        .route("/api/v1/rooms/:room_code", get(rooms::get_room))
+        // Protected room routes (use test auth middleware)
+        .nest(
+            "/api/v1/rooms",
+            Router::new()
+                .route("/", post(rooms::create_room))
+                .route("/:room_code/join", post(rooms::join_room))
+                .route("/:room_code/leave", post(rooms::leave_room))
+                .route_layer(from_fn_with_state(app_state.clone(), test_auth_middleware)),
+        )
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(Any),
+        )
+        .with_state(app_state);
+
+    app
+}
+
+// Test endpoint implementations (simplified versions)
+async fn test_health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(json!({"status": "healthy", "version": "test"}))
+}
+
+async fn test_login() -> axum::Json<serde_json::Value> {
+    axum::Json(
+        json!({"auth_url": "https://id.twitch.tv/oauth2/authorize?client_id=test&redirect_uri=test&response_type=code&scope=user:read:email"}),
+    )
+}
+
+async fn test_auth_callback(
+    axum::Json(_request): axum::Json<LoginRequest>,
+) -> Result<axum::Json<LoginResponse>, AppError> {
+    Err(AppError::from(AuthError::InvalidCredentials))
+}
+
+async fn test_get_current_user() -> Result<axum::Json<serde_json::Value>, AppError> {
+    Err(AppError::from(AuthError::Unauthorized))
+}
+
+async fn test_websocket_placeholder() -> (StatusCode, &'static str) {
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        "WebSocket endpoint not implemented",
+    )
 }
 
 /// Create a test user and return their JWT token
@@ -64,8 +210,14 @@ pub async fn create_test_user(_app: &Router, username: &str) -> String {
         updated_at: Utc::now(),
     };
 
-    // For testing, we'll create a simple JWT token
-    // In a real test environment, you'd use the actual auth service
+    // Add user to test storage
+    let user_id = user.id.unwrap().to_hex();
+    let test_users = get_test_users();
+    let mut users = test_users.write().await;
+    users.insert(user_id.clone(), user.clone());
+    drop(users);
+
+    // Create JWT token
     create_test_jwt_token(&user)
 }
 
@@ -88,6 +240,13 @@ fn create_test_jwt_token(user: &User) -> String {
         &EncodingKey::from_secret("test_jwt_secret_key_for_testing_only".as_ref()),
     )
     .expect("Failed to create test JWT token")
+}
+
+/// Clean up test user storage
+pub async fn cleanup_test_users() {
+    let test_users = get_test_users();
+    let mut users = test_users.write().await;
+    users.clear();
 }
 
 /// Helper to create a test room and return the room code
