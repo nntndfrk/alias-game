@@ -31,6 +31,13 @@ module.exports = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        // Custom color palette
+        alias: {
+          dark: "#352F44",     // rgb(53, 47, 68)
+          medium: "#5C5470",   // rgb(92, 84, 112)
+          light: "#B9B4C7",    // rgb(185, 180, 199)
+          cream: "#FAF0E6",    // rgb(250, 240, 230)
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
