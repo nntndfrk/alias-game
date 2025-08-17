@@ -7,8 +7,6 @@ use chrono::Utc;
 use mongodb::bson::oid::ObjectId;
 use rand::Rng;
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 use shared::models::{
     CreateRoomRequest, CreateRoomResponse, GameRoom, RoomInfo, RoomParticipant, RoomState, User,
