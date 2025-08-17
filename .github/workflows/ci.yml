@@ -106,23 +106,23 @@ jobs:
     - name: Build affected projects
       run: npx nx affected -t build --parallel=3
 
-  docker-build:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-    - name: Install nx
-      run: npm ci
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build Docker images
-      run: npx nx build docker
+#  docker-build:
+#    name: Docker Build
+#    runs-on: ubuntu-latest
+#    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+#    steps:
+#    - uses: actions/checkout@v4
+#
+#    - name: Setup Node.js
+#      uses: actions/setup-node@v4
+#      with:
+#        node-version: '18'
+#
+#    - name: Install nx
+#      run: npm ci
+#
+#    - name: Set up Docker Buildx
+#      uses: docker/setup-buildx-action@v3
+#
+#    - name: Build Docker images
+#      run: npx nx build docker
