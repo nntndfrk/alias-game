@@ -5,7 +5,7 @@ use axum::{
 };
 use shared::errors::AuthError;
 
-use crate::{AppState, error::AppError};
+use crate::{error::AppError, AppState};
 
 pub async fn auth_middleware(
     State(state): State<AppState>,

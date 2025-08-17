@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Path, State, Extension},
-    response::Json,
+    extract::{Extension, Path, State},
     http::StatusCode,
+    response::Json,
 };
 use chrono::Utc;
 use mongodb::bson::oid::ObjectId;
@@ -11,8 +11,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use shared::models::{
-    CreateRoomRequest, CreateRoomResponse, GameRoom,
-    RoomInfo, RoomParticipant, RoomState, User, UserRole,
+    CreateRoomRequest, CreateRoomResponse, GameRoom, RoomInfo, RoomParticipant, RoomState, User,
+    UserRole,
 };
 
 use crate::error::AppError;
@@ -43,7 +43,9 @@ pub async fn create_room(
 ) -> Result<Json<CreateRoomResponse>, AppError> {
     // Validate max players
     if req.max_players < 4 || req.max_players > 10 {
-        return Err(AppError::bad_request("Max players must be between 4 and 10".into()));
+        return Err(AppError::bad_request(
+            "Max players must be between 4 and 10".into(),
+        ));
     }
 
     let room_code = generate_room_code();
@@ -100,7 +102,7 @@ pub async fn join_room(
 ) -> Result<Json<GameRoom>, AppError> {
     let user_id = user.id.unwrap().to_hex();
     let mut rooms = state.rooms.write().await;
-    
+
     let room = rooms
         .get_mut(&room_code)
         .ok_or_else(|| AppError::not_found("Room not found".into()))?;
@@ -129,7 +131,7 @@ pub async fn join_room(
 
     room.participants.insert(user_id.clone(), participant);
     room.updated_at = Utc::now();
-    
+
     tracing::info!(
         "User {} joined room {}. Total participants: {}",
         user_id,
@@ -146,11 +148,11 @@ pub async fn get_room(
     Path(room_code): Path<String>,
 ) -> Result<Json<GameRoom>, AppError> {
     let rooms = state.rooms.read().await;
-    
+
     let room = rooms
         .get(&room_code)
         .ok_or_else(|| AppError::not_found("Room not found".into()))?;
-    
+
     tracing::info!(
         "Getting room {} info. Participants: {}",
         room_code,
@@ -161,19 +163,18 @@ pub async fn get_room(
 }
 
 /// List available rooms
-pub async fn list_rooms(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<RoomInfo>>, AppError> {
+pub async fn list_rooms(State(state): State<AppState>) -> Result<Json<Vec<RoomInfo>>, AppError> {
     let rooms = state.rooms.read().await;
-    
+
     let room_list: Vec<RoomInfo> = rooms
         .values()
         .map(|room| {
-            let admin = room.participants
+            let admin = room
+                .participants
                 .get(&room.admin_id)
                 .map(|p| p.username.clone())
                 .unwrap_or_default();
-                
+
             RoomInfo {
                 id: room.id.map(|id| id.to_hex()).unwrap_or_default(),
                 room_code: room.room_code.clone(),
@@ -197,7 +198,7 @@ pub async fn leave_room(
 ) -> Result<StatusCode, AppError> {
     let user_id = user.id.unwrap().to_hex();
     let mut rooms = state.rooms.write().await;
-    
+
     let room = rooms
         .get_mut(&room_code)
         .ok_or_else(|| AppError::not_found("Room not found".into()))?;

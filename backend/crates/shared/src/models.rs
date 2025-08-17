@@ -90,8 +90,8 @@ impl From<User> for UserInfo {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum UserRole {
-    Admin,    // Room creator, observer
-    Player,   // Regular player
+    Admin,  // Room creator, observer
+    Player, // Regular player
 }
 
 // Game room participant
@@ -125,7 +125,7 @@ pub struct GameRoom {
     pub id: Option<ObjectId>,
     pub room_code: String,
     pub name: String,
-    pub admin_id: String,  // User ID of the room creator/admin
+    pub admin_id: String, // User ID of the room creator/admin
     pub participants: HashMap<String, RoomParticipant>,
     pub state: RoomState,
     pub max_players: u8,
@@ -179,7 +179,7 @@ pub enum WebSocketMessage {
     StartGame,
     PauseGame,
     ResumeGame,
-    
+
     // Server to client
     RoomJoined { room: GameRoom },
     RoomUpdated { room: GameRoom },

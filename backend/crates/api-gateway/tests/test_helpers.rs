@@ -1,6 +1,6 @@
 use auth_service::AuthService;
 use axum::{
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
     Router,
 };
@@ -14,20 +14,20 @@ use tokio::sync::RwLock;
 use tower::ServiceExt;
 
 // Import from the lib.rs
-use api_gateway::{AppState, create_router};
+use api_gateway::{create_router, AppState};
 
 /// Create a test app instance with in-memory storage
 pub async fn create_test_app() -> Router {
     // Use in-memory Redis and MongoDB for testing
     let redis_client = Arc::new(
         redis::Client::open("redis://127.0.0.1:6379/1")
-            .expect("Failed to create test Redis client")
+            .expect("Failed to create test Redis client"),
     );
-    
+
     let mongo_client = Arc::new(
         mongodb::Client::with_uri_str("mongodb://localhost:27017")
             .await
-            .expect("Failed to create test MongoDB client")
+            .expect("Failed to create test MongoDB client"),
     );
 
     let db = mongo_client.database("alias_game_test");
@@ -145,7 +145,7 @@ pub async fn join_test_room(
 
     let status = response.status();
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    
+
     let response_json: Value = if body.is_empty() {
         json!({})
     } else {
@@ -171,7 +171,7 @@ pub async fn get_test_room(app: &Router, room_code: &str) -> (StatusCode, Value)
 
     let status = response.status();
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    
+
     let response_json: Value = if body.is_empty() {
         json!({})
     } else {
@@ -182,11 +182,7 @@ pub async fn get_test_room(app: &Router, room_code: &str) -> (StatusCode, Value)
 }
 
 /// Helper to leave a room
-pub async fn leave_test_room(
-    app: &Router,
-    auth_token: &str,
-    room_code: &str,
-) -> StatusCode {
+pub async fn leave_test_room(app: &Router, auth_token: &str, room_code: &str) -> StatusCode {
     let response = app
         .clone()
         .oneshot(
@@ -217,8 +213,8 @@ mod tests {
     async fn test_helpers_work() {
         let app = create_test_app().await;
         let token = create_test_user(&app, "test_helper_user").await;
-        
+
         assert!(!token.is_empty());
-        assert!(token.contains('.'));  // JWT tokens contain dots
+        assert!(token.contains('.')); // JWT tokens contain dots
     }
 }

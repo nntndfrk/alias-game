@@ -4,9 +4,9 @@ use axum::{
 };
 use chrono::Utc;
 use mongodb::bson::oid::ObjectId;
-use shared::models::{User, GameRoom, RoomParticipant, UserRole};
+use shared::models::{GameRoom, RoomParticipant, User, UserRole};
 
-use crate::{AppState, error::AppError};
+use crate::{error::AppError, AppState};
 
 /// Test endpoint to simulate joining a room
 /// WARNING: This should only be used in development!
@@ -26,10 +26,10 @@ pub async fn test_join_room(
         created_at: Utc::now(),
         updated_at: Utc::now(),
     };
-    
+
     let user_id = test_user.id.unwrap().to_hex();
     let mut rooms = state.rooms.write().await;
-    
+
     let room = rooms
         .get_mut(&room_code)
         .ok_or_else(|| AppError::not_found("Room not found".into()))?;

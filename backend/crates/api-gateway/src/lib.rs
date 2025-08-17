@@ -9,15 +9,15 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use shared::errors::AuthError;
-use shared::models::{LoginRequest, LoginResponse, GameRoom};
+use shared::models::{GameRoom, LoginRequest, LoginResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 
-pub mod rooms;
-pub mod error;
 pub mod auth_middleware;
+pub mod error;
+pub mod rooms;
 #[cfg(debug_assertions)]
 mod test_utils;
 
@@ -49,11 +49,14 @@ pub fn create_router(app_state: AppState) -> Router {
         // Public room routes (no auth required)
         .route("/api/v1/rooms", get(rooms::list_rooms))
         .route("/api/v1/rooms/:room_code", get(rooms::get_room));
-        
+
     // Add test route in debug mode
     #[cfg(debug_assertions)]
-    let app = app.route("/api/v1/test/rooms/:room_code/join", post(test_utils::test_join_room));
-    
+    let app = app.route(
+        "/api/v1/test/rooms/:room_code/join",
+        post(test_utils::test_join_room),
+    );
+
     app
         // Protected room routes (auth required)
         .nest(

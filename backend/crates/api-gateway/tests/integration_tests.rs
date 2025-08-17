@@ -1,5 +1,5 @@
 use axum::{
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
 use serde_json::{json, Value};
@@ -123,7 +123,7 @@ async fn test_room_join_flow() {
 
     assert_eq!(room["room_code"], room_code);
     assert_eq!(room["participants"].as_object().unwrap().len(), 2);
-    
+
     // Verify both admin and player are in participants
     let participants = room["participants"].as_object().unwrap();
     assert!(participants.iter().any(|(_, p)| p["role"] == "admin"));
@@ -326,7 +326,7 @@ async fn test_leave_room() {
 
     // Create room and join
     let room_code = create_test_room(&app, &admin_token, "Leave Test", 8).await;
-    
+
     // Player joins
     let response = app
         .clone()
@@ -424,7 +424,7 @@ async fn test_admin_leaves_room_transfer() {
 
     // Create room and have player join
     let room_code = create_test_room(&app, &admin_token, "Admin Transfer Test", 8).await;
-    
+
     let response = app
         .clone()
         .oneshot(
@@ -470,9 +470,9 @@ async fn test_admin_leaves_room_transfer() {
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let room: Value = serde_json::from_slice(&body).unwrap();
-    
+
     assert_eq!(room["participants"].as_object().unwrap().len(), 1);
-    
+
     // The remaining participant should be admin
     let participants = room["participants"].as_object().unwrap();
     let remaining_participant = participants.values().next().unwrap();
@@ -547,7 +547,9 @@ async fn test_invalid_token() {
                 .uri("/api/v1/rooms")
                 .header("Authorization", "Bearer invalid_token")
                 .header("Content-Type", "application/json")
-                .body(Body::from(json!({"name": "Test", "max_players": 8}).to_string()))
+                .body(Body::from(
+                    json!({"name": "Test", "max_players": 8}).to_string(),
+                ))
                 .unwrap(),
         )
         .await

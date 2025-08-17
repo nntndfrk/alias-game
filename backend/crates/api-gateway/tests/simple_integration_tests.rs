@@ -1,5 +1,5 @@
 use axum::{
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     http::{Method, Request, StatusCode},
 };
 use serde_json::{json, Value};
@@ -180,5 +180,8 @@ async fn test_login_endpoint() {
     let response_json: Value = serde_json::from_slice(&body).unwrap();
 
     assert!(response_json["auth_url"].is_string());
-    assert!(response_json["auth_url"].as_str().unwrap().contains("twitch.tv"));
+    assert!(response_json["auth_url"]
+        .as_str()
+        .unwrap()
+        .contains("twitch.tv"));
 }
