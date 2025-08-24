@@ -66,7 +66,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         websocket_manager: Arc::new(WebSocketManager::new()),
     };
 
-    let app = create_router(app_state);
+    let app = create_router(app_state.clone());
+
+    // Spawn background task to clean up abandoned rooms periodically
+    let cleanup_state = app_state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300)); // Run every 5 minutes
+        loop {
+            interval.tick().await;
+            info!("Running abandoned room cleanup task");
+            api_gateway::websocket::cleanup_abandoned_rooms(&cleanup_state, 60).await;
+            // Clean up rooms abandoned for 60 minutes
+        }
+    });
 
     // Start the server
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

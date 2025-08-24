@@ -20,9 +20,10 @@ import { AuthService } from '../../features/auth/auth.service';
           </nav>
         </div>
         
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center gap-4">
+          <ng-content select="[slot=actions]"></ng-content>
           @if (authService.isAuthenticated()) {
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center gap-2">
               @if (authService.user()?.profile_image_url) {
                 <img 
                   [src]="authService.user()?.profile_image_url" 
@@ -33,7 +34,6 @@ import { AuthService } from '../../features/auth/auth.service';
               <span class="text-sm font-medium">{{ authService.user()?.display_name }}</span>
             </div>
           }
-          <ng-content select="[slot=actions]"></ng-content>
         </div>
       </div>
     </header>

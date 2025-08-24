@@ -9,15 +9,15 @@ import { ButtonComponent } from './button.component';
   template: `
     @if (isOpen()) {
       <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="onBackdropClick($event)" tabindex="-1" role="button" (keydown.escape)="close()">
-        <div class="bg-white dark:bg-alias-dark rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" tabindex="-1">
+        <div class="bg-background rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-border" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" tabindex="-1">
           <!-- Header -->
-          <div class="flex items-center justify-between p-6 border-b dark:border-alias-medium/30">
-            <h2 class="text-xl font-semibold dark:text-alias-cream">{{ title() }}</h2>
+          <div class="flex items-center justify-between p-6 border-b border-border">
+            <h2 class="text-xl font-semibold text-foreground">{{ title() }}</h2>
             <alias-button 
               variant="ghost" 
               size="sm" 
               (click)="close()"
-              class="!p-1 hover:bg-gray-100 dark:hover:bg-alias-medium/30 rounded"
+              class="!p-1 hover:bg-accent rounded"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -32,7 +32,7 @@ import { ButtonComponent } from './button.component';
           
           <!-- Footer -->
           @if (showFooter()) {
-            <div class="flex justify-end gap-3 p-6 border-t dark:border-alias-medium/30 bg-gray-50 dark:bg-alias-dark/50">
+            <div class="flex justify-end gap-3 p-6 border-t border-border bg-muted/20">
               <ng-content select="[slot=footer]"></ng-content>
             </div>
           }

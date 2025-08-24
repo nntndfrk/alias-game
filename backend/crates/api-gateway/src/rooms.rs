@@ -288,7 +288,28 @@ pub async fn leave_room(
         )
         .await;
 
-    // If admin leaves, transfer admin role or delete room if empty
+    // Check if room is now empty (regardless of who left)
+    if room.participants.is_empty() {
+        // Remove empty room
+        rooms.remove(&room_code);
+        state.websocket_manager.remove_room(&room_code).await;
+
+        // Broadcast room deletion to lobby
+        state
+            .websocket_manager
+            .broadcast_to_lobby(WebSocketMessage::RoomDeleted {
+                room_code: room_code.clone(),
+            });
+
+        tracing::info!(
+            "Room {} deleted (last user {} left intentionally)",
+            room_code,
+            user_id
+        );
+        return Ok(StatusCode::OK);
+    }
+
+    // If admin leaves but room is not empty, transfer admin role
     if room.admin_id == user_id {
         if let Some((new_admin_id, participant)) = room.participants.iter_mut().next() {
             // Transfer admin role to another participant
@@ -306,11 +327,13 @@ pub async fn leave_room(
                     },
                 )
                 .await;
-        } else {
-            // Remove empty room
-            rooms.remove(&room_code);
-            state.websocket_manager.remove_room(&room_code).await;
-            return Ok(StatusCode::OK);
+
+            tracing::info!(
+                "Admin role transferred from {} to {} in room {}",
+                user_id,
+                new_admin_id,
+                room_code
+            );
         }
     }
 

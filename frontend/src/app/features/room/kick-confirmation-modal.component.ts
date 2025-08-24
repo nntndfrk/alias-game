@@ -17,7 +17,7 @@ import { type RoomParticipant } from '../lobby/room.service';
     >
       <div class="space-y-4">
         @if (player()) {
-          <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-alias-medium/20 rounded-lg">
+          <div class="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
             @if (player()!.profile_image_url) {
               <img 
                 [src]="player()!.profile_image_url" 

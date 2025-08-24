@@ -39,17 +39,26 @@ import { filter, take } from 'rxjs/operators';
                   type="text" 
                   [(ngModel)]="roomName"
                   placeholder="Enter room name..." 
-                  class="w-full px-3 py-2 border rounded-md">
+                  class="w-full px-3 py-2 border rounded-md bg-background text-foreground border-input placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
               </div>
               <div>
                 <label for="max-players" class="block text-sm font-medium mb-2">Max Players</label>
-                <select id="max-players" data-cy="max-players-select" [(ngModel)]="maxPlayers" class="w-full px-3 py-2 border rounded-md">
-                  <option [value]="6">6 Players</option>
-                  <option [value]="8">8 Players</option>
-                  <option [value]="10">10 Players</option>
-                </select>
+                <div class="relative">
+                  <select id="max-players" data-cy="max-players-select" [(ngModel)]="maxPlayers" class="w-full px-3 py-2 pr-10 border rounded-md bg-background text-foreground border-input focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none">
+                    <option [value]="6">6 Players</option>
+                    <option [value]="8">8 Players</option>
+                    <option [value]="10">10 Players</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <svg class="h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <alias-button data-cy="create-room-button" class="w-full" (click)="createRoom()" [disabled]="isCreating()">{{ isCreating() ? 'Creating...' : 'Create Room' }}</alias-button>
+              <div class="pt-2">
+                <alias-button data-cy="create-room-button" class="w-full" (click)="createRoom()" [disabled]="isCreating()">{{ isCreating() ? 'Creating...' : 'Create Room' }}</alias-button>
+              </div>
             </div>
           </alias-card-content>
         </alias-card>
@@ -68,9 +77,11 @@ import { filter, take } from 'rxjs/operators';
                   type="text" 
                   [(ngModel)]="roomCode"
                   placeholder="Enter room code..." 
-                  class="w-full px-3 py-2 border rounded-md">
+                  class="w-full px-3 py-2 border rounded-md bg-background text-foreground border-input placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
               </div>
-              <alias-button data-cy="join-room-button" variant="outline" class="w-full" (click)="joinRoom()" [disabled]="isJoining()">{{ isJoining() ? 'Joining...' : 'Join Room' }}</alias-button>
+              <div class="pt-2">
+                <alias-button data-cy="join-room-button" variant="outline" class="w-full" (click)="joinRoom()" [disabled]="isJoining()">{{ isJoining() ? 'Joining...' : 'Join Room' }}</alias-button>
+              </div>
             </div>
             
             <div class="mt-6">
@@ -106,7 +117,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
   
   // Form inputs
   roomName = '';
-  maxPlayers = 8;
+  maxPlayers = 6;
   roomCode = '';
   
   // Loading states

@@ -9,7 +9,8 @@
   "devDependencies": {
     "nx": "^21.4.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.2.0"
+    "lint-staged": "^15.2.0",
+    "concurrently": "^8.2.2"
   },
   "lint-staged": {
     "frontend/**/*.{ts,js,html,css,scss}": [

@@ -4,6 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+### Quick Start with Nx (from root directory)
+```bash
+# Install cargo-watch for live-reloading (one-time setup)
+nx install-watch backend
+
+# Install dependencies
+npm install
+
+# Run backend with live-reloading
+nx dev backend
+
+# Run frontend development server
+nx dev frontend
+
+# Run both frontend and backend together (with Docker services)
+nx start dev-stack
+
+# Run backend without live-reload
+nx dev:no-watch backend
+```
+
 ### Frontend Development
 ```bash
 # Navigate to frontend directory
@@ -36,8 +57,11 @@ cd backend
 # Build the project
 cargo build
 
-# Run development server
+# Run development server (without live-reload)
 cargo run --bin api-gateway
+
+# Run with live-reload (requires cargo-watch)
+cargo watch -x 'run --bin api-gateway' -w crates -w bin
 
 # Run tests
 cargo test

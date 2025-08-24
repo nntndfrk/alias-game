@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { HeaderComponent } from './header.component';
+import { ConnectionStatusComponent } from './connection-status.component';
 
 @Component({
   selector: 'alias-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, HeaderComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, HeaderComponent, ConnectionStatusComponent],
   template: `
     <div class="min-h-screen bg-background">
       <alias-header [title]="'Alias Game'">
@@ -40,6 +41,9 @@ import { HeaderComponent } from './header.component';
         <ng-content></ng-content>
         <router-outlet />
       </main>
+      
+      <!-- Connection status indicator -->
+      <alias-connection-status />
     </div>
   `
 })

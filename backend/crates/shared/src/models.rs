@@ -182,9 +182,11 @@ pub enum WebSocketMessage {
     StartGame,
     PauseGame,
     ResumeGame,
+    Ping,
 
     // Server to client
     Authenticated { user: UserInfo },
+    Pong,
     RoomList { rooms: Vec<RoomInfo> },
     RoomJoined { room: GameRoom },
     RoomUpdated { room: GameRoom },
@@ -213,7 +215,9 @@ impl WebSocketMessage {
             WebSocketMessage::StartGame => "start_game",
             WebSocketMessage::PauseGame => "pause_game",
             WebSocketMessage::ResumeGame => "resume_game",
+            WebSocketMessage::Ping => "ping",
             WebSocketMessage::Authenticated { .. } => "authenticated",
+            WebSocketMessage::Pong => "pong",
             WebSocketMessage::RoomList { .. } => "room_list",
             WebSocketMessage::RoomJoined { .. } => "room_joined",
             WebSocketMessage::RoomUpdated { .. } => "room_updated",

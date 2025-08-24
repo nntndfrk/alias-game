@@ -275,6 +275,11 @@ async fn handle_websocket_message(
             }
         }
 
+        WebSocketMessage::Ping => {
+            // Respond to ping with pong to keep connection alive
+            Ok(Some(WebSocketMessage::Pong))
+        }
+
         WebSocketMessage::KickPlayer { user_id } => {
             if let (Some(admin), Some(room_code)) =
                 (authenticated_user.as_ref(), current_room.as_ref())
@@ -368,7 +373,25 @@ async fn handle_leave_room(user: &User, room_code: &str, state: &AppState) -> Re
         )
         .await;
 
-    // If admin leaves, transfer admin role or delete room if empty
+    // Check if room is now empty (regardless of who left)
+    if room.participants.is_empty() {
+        // Remove empty room
+        rooms.remove(room_code);
+        ws_manager.remove_room(room_code).await;
+
+        // Broadcast room deletion to lobby
+        ws_manager.broadcast_to_lobby(WebSocketMessage::RoomDeleted {
+            room_code: room_code.to_string(),
+        });
+
+        info!(
+            "Room {} deleted (last user left) and broadcast to lobby",
+            room_code
+        );
+        return Ok(());
+    }
+
+    // If admin leaves but room is not empty, transfer admin role
     if room.admin_id == user_id {
         if let Some((new_admin_id, participant)) = room.participants.iter_mut().next() {
             // Transfer admin role to another participant
@@ -385,18 +408,11 @@ async fn handle_leave_room(user: &User, room_code: &str, state: &AppState) -> Re
                     },
                 )
                 .await;
-        } else {
-            // Remove empty room
-            rooms.remove(room_code);
-            ws_manager.remove_room(room_code).await;
 
-            // Broadcast room deletion to lobby
-            ws_manager.broadcast_to_lobby(WebSocketMessage::RoomDeleted {
-                room_code: room_code.to_string(),
-            });
-
-            info!("Room {} deleted (empty) and broadcast to lobby", room_code);
-            return Ok(());
+            info!(
+                "Admin role transferred from {} to {} in room {}",
+                user_id, new_admin_id, room_code
+            );
         }
     }
 
@@ -527,6 +543,7 @@ async fn handle_user_disconnect(user: &User, room_code: &str, state: &AppState) 
     if let Some(room) = rooms.get_mut(room_code) {
         if let Some(participant) = room.participants.get_mut(&user_id) {
             // Mark user as disconnected but keep them in the room
+            // This allows them to reconnect later
             participant.is_connected = false;
             room.updated_at = chrono::Utc::now();
 
@@ -540,42 +557,45 @@ async fn handle_user_disconnect(user: &User, room_code: &str, state: &AppState) 
                 .await;
 
             info!(
-                "User {} marked as disconnected in room {}",
+                "User {} marked as disconnected in room {} (can reconnect)",
                 user_id, room_code
             );
         }
     }
 }
 
-// Optional: Clean up users who have been disconnected for too long
-// This can be called periodically or triggered by admin action
-#[allow(dead_code)]
-async fn cleanup_disconnected_users(state: &AppState, disconnect_timeout_minutes: i64) {
+// Clean up abandoned rooms where all users have been disconnected for too long
+pub async fn cleanup_abandoned_rooms(state: &AppState, disconnect_timeout_minutes: i64) {
     let mut rooms = state.rooms.write().await;
     let cutoff_time = chrono::Utc::now() - chrono::Duration::minutes(disconnect_timeout_minutes);
+    let mut rooms_to_remove = Vec::new();
 
-    for room in rooms.values_mut() {
-        let mut users_to_remove = Vec::new();
+    for (room_code, room) in rooms.iter() {
+        // Check if all participants are disconnected
+        let all_disconnected = room.participants.values().all(|p| !p.is_connected);
 
-        for (user_id, participant) in &room.participants {
-            // Remove users who have been disconnected for longer than the timeout
-            if !participant.is_connected && participant.joined_at < cutoff_time {
-                users_to_remove.push(user_id.clone());
-            }
+        // If all users are disconnected and the room hasn't been updated recently
+        if all_disconnected && room.updated_at < cutoff_time {
+            rooms_to_remove.push(room_code.clone());
+            info!(
+                "Room {} scheduled for deletion (abandoned for {} minutes)",
+                room_code, disconnect_timeout_minutes
+            );
         }
+    }
 
-        for user_id in users_to_remove {
-            room.participants.remove(&user_id);
+    // Remove abandoned rooms
+    for room_code in rooms_to_remove {
+        rooms.remove(&room_code);
+        state.websocket_manager.remove_room(&room_code).await;
 
-            // If admin was removed, transfer admin role
-            if room.admin_id == user_id {
-                if let Some((new_admin_id, participant)) = room.participants.iter_mut().next() {
-                    participant.role = UserRole::Admin;
-                    room.admin_id = new_admin_id.clone();
+        // Broadcast room deletion to lobby
+        state
+            .websocket_manager
+            .broadcast_to_lobby(WebSocketMessage::RoomDeleted {
+                room_code: room_code.clone(),
+            });
 
-                    // TODO: Broadcast role update
-                }
-            }
-        }
+        info!("Room {} deleted (abandoned)", room_code);
     }
 }

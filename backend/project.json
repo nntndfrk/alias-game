@@ -7,12 +7,30 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
+        "command": "node ../tools/kill-port.js 3000 && cargo watch -x 'run --bin api-gateway' -w crates -w bin",
+        "cwd": "backend",
+        "envFile": ".env",
+        "env": {
+          "RUST_LOG": "debug"
+        }
+      }
+    },
+    "dev:no-watch": {
+      "executor": "nx:run-commands",
+      "options": {
         "command": "node ../tools/kill-port.js 3000 && cargo run --bin api-gateway",
         "cwd": "backend",
         "envFile": ".env",
         "env": {
           "RUST_LOG": "debug"
         }
+      }
+    },
+    "install-watch": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cargo install cargo-watch",
+        "cwd": "backend"
       }
     },
     "build": {
