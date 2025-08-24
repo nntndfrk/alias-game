@@ -5,12 +5,13 @@ import { ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent
 import { RoomService, type RoomParticipant } from '../lobby/room.service';
 import { AuthService } from '../auth/auth.service';
 import { KickConfirmationModalComponent } from './kick-confirmation-modal.component';
+import { WebcamPreviewComponent } from './webcam-preview.component';
 import { WebSocketService } from '../../core/services/websocket.service';
 
 @Component({
   selector: 'alias-room',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent, KickConfirmationModalComponent],
+  imports: [CommonModule, ButtonComponent, CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent, KickConfirmationModalComponent, WebcamPreviewComponent],
   template: `
     <div class="max-w-6xl mx-auto">
       @if (room()) {
@@ -31,8 +32,9 @@ import { WebSocketService } from '../../core/services/websocket.service';
         </div>
         
         <div class="grid gap-6 lg:grid-cols-3">
-          <!-- Players List -->
-          <div class="lg:col-span-2">
+          <!-- Left Column: Players List and Camera Setup -->
+          <div class="lg:col-span-2 grid gap-6">
+            <!-- Players List -->
             <alias-card>
               <alias-card-header>
                 <alias-card-title>Players ({{ participantCount() }}/{{ room()!.max_players }})</alias-card-title>
@@ -113,6 +115,11 @@ import { WebSocketService } from '../../core/services/websocket.service';
                 </div>
               </alias-card-content>
             </alias-card>
+            
+            <!-- Camera Setup (below Players, only when waiting) -->
+            @if (room()!.state === 'waiting') {
+              <alias-webcam-preview></alias-webcam-preview>
+            }
           </div>
           
           <!-- Room Info -->
@@ -139,8 +146,8 @@ import { WebSocketService } from '../../core/services/websocket.service';
                 
                 @if (isAdmin()) {
                   <div class="mt-6 p-4 bg-primary-10 rounded-lg">
-                    <h4 class="font-medium mb-2">Admin Controls</h4>
-                    <p class="text-sm text-muted-foreground mb-3">
+                    <h4 class="text-sm font-medium mb-2">Admin Controls</h4>
+                    <p class="text-xs text-muted-foreground mb-3">
                       As the room admin, you can start the game and manage players. Click the "Kick" button next to any player to remove them from the room.
                     </p>
                     <div class="space-y-2">
@@ -221,15 +228,24 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.roomService.stopPeriodicRoomSync();
     
     // Clean up intervals and timeouts
+    this.cleanupMonitoring();
+  }
+  
+  private cleanupMonitoring(): void {
     if (this.monitorInterval) {
       clearInterval(this.monitorInterval);
+      this.monitorInterval = undefined;
     }
     if (this.monitorTimeout) {
       clearTimeout(this.monitorTimeout);
+      this.monitorTimeout = undefined;
     }
   }
   
   private startPeriodicSyncIfNeeded(): void {
+    // Clean up any existing monitoring first
+    this.cleanupMonitoring();
+    
     // Only start periodic sync if WebSocket is not connected
     if (!this.wsService.isConnected() || !this.wsService.isAuthenticated()) {
       console.log('[RoomComponent] Starting periodic sync as WebSocket fallback');
@@ -241,19 +257,13 @@ export class RoomComponent implements OnInit, OnDestroy {
       if (this.wsService.isConnected() && this.wsService.isAuthenticated()) {
         console.log('[RoomComponent] WebSocket connected, stopping periodic sync');
         this.roomService.stopPeriodicRoomSync();
-        if (this.monitorInterval) {
-          clearInterval(this.monitorInterval);
-          this.monitorInterval = undefined;
-        }
+        this.cleanupMonitoring();
       }
     }, 1000) as ReturnType<typeof setInterval>;
     
-    // Clean up after 30 seconds
+    // Clean up after 30 seconds as a safety measure
     this.monitorTimeout = setTimeout(() => {
-      if (this.monitorInterval) {
-        clearInterval(this.monitorInterval);
-        this.monitorInterval = undefined;
-      }
+      this.cleanupMonitoring();
     }, 30000) as ReturnType<typeof setTimeout>;
   }
   
@@ -279,14 +289,21 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (room) {
       const participantList = Object.values(room.participants);
       
-      // Sort participants: admin first, then by joined_at
+      // Sort participants: admin first, then by joined_at, with user_id as final tie-breaker
       const sortedParticipants = participantList.sort((a, b) => {
         // Admin always comes first
         if (a.role === 'admin' && b.role !== 'admin') return -1;
         if (b.role === 'admin' && a.role !== 'admin') return 1;
         
         // Then sort by joined_at (earliest first)
-        return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
+        const timeA = new Date(a.joined_at).getTime();
+        const timeB = new Date(b.joined_at).getTime();
+        if (timeA !== timeB) {
+          return timeA - timeB;
+        }
+        
+        // Final tie-breaker: sort by user_id for consistent ordering
+        return a.user_id.localeCompare(b.user_id);
       });
       
       this.participants.set(sortedParticipants);
