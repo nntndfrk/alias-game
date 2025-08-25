@@ -23,6 +23,19 @@ export interface WebSocketMessage {
   role?: 'admin' | 'player';
   message?: string;
   room_code?: string;
+  // Game-specific fields
+  team_id?: string;
+  teams?: unknown[];
+  team?: unknown;
+  game_state?: unknown;
+  round?: unknown;
+  word?: unknown;
+  result?: 'correct' | 'skipped' | 'penalty';
+  score_change?: number;
+  time_remaining?: number;
+  winner_team?: unknown;
+  final_scores?: unknown[];
+  next_team_id?: string;
 }
 
 export interface RoomInfo {

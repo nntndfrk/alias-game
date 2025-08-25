@@ -21,14 +21,9 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'game/:roomId',
-    loadComponent: () => import('./features/game/game.component').then(m => m.GameComponent),
-    canActivate: [authGuard]
-  },
-  {
     path: 'game',
-    redirectTo: '/lobby',
-    pathMatch: 'full'
+    loadChildren: () => import('./features/game/game.routes').then(m => m.gameRoutes),
+    canActivate: [authGuard]
   },
   {
     path: 'settings',
