@@ -28,6 +28,7 @@ jsonwebtoken = "9"
 # Internal crates
 shared = { path = "../shared" }
 auth-service = { path = "../auth-service" }
+game-engine = { path = "../game-engine" }
 
 # Configuration
 dotenv = "0.15"
@@ -42,6 +43,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Time and random
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
+
+# Static initialization
+lazy_static = "1.4"
 
 [dev-dependencies]
 # Testing dependencies

@@ -17,6 +17,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 pub mod auth_middleware;
 pub mod error;
+pub mod game;
 pub mod rooms;
 #[cfg(debug_assertions)]
 mod test_utils;
@@ -69,6 +70,27 @@ pub fn create_router(app_state: AppState) -> Router {
                 .route("/:room_code/join", post(rooms::join_room))
                 .route("/:room_code/leave", post(rooms::leave_room))
                 .route("/:room_code/kick/:player_id", post(rooms::kick_player))
+                .route_layer(from_fn_with_state(
+                    app_state.clone(),
+                    auth_middleware::auth_middleware,
+                )),
+        )
+        // Protected game routes (auth required)
+        .nest(
+            "/api/v1/game",
+            Router::new()
+                .route("/:room_code/start", post(game::initialize_game))
+                .route("/:room_code/state", get(game::get_game_state))
+                .route("/:room_code/teams", get(game::get_teams))
+                .route("/:room_code/teams/join", post(game::join_team))
+                .route("/:room_code/teams/leave", post(game::leave_team))
+                .route("/:room_code/round/start", post(game::start_round))
+                .route("/:room_code/round/end", post(game::end_round))
+                .route("/:room_code/word/current", get(game::get_current_word))
+                .route("/:room_code/word/result", post(game::submit_word_result))
+                .route("/:room_code/pause", post(game::pause_game))
+                .route("/:room_code/resume", post(game::resume_game))
+                .route("/:room_code/reset", post(game::reset_game))
                 .route_layer(from_fn_with_state(
                     app_state.clone(),
                     auth_middleware::auth_middleware,

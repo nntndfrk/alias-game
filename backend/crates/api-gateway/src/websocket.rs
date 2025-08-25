@@ -17,6 +17,8 @@ use crate::auth_middleware;
 use crate::AppState;
 use shared::models::{User, UserInfo, UserRole, WebSocketMessage};
 
+mod game;
+
 // WebSocket connection manager
 pub struct WebSocketManager {
     // Room ID -> broadcast sender for that room
@@ -288,6 +290,97 @@ async fn handle_websocket_message(
                 Ok(None)
             } else {
                 Err("Not authorized or not in a room".to_string())
+            }
+        }
+        // Game-specific messages
+        WebSocketMessage::JoinTeam { team_id } => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_join_team(user, &team_id, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::LeaveTeam => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_leave_team(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::MarkReady => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_mark_ready(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::StartGame => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_start_game(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::StartRound => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_start_round(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::WordAction { result } => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_word_action(user, result, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::RequestNewWord => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_request_new_word(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::EndRound => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_end_round(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::PauseGame => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_pause_game(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
+            }
+        }
+        WebSocketMessage::ResumeGame => {
+            if let (Some(user), Some(room_code)) =
+                (authenticated_user.as_ref(), current_room.as_ref())
+            {
+                game::handle_resume_game(user, room_code, state).await
+            } else {
+                Err("Not authenticated or not in a room".to_string())
             }
         }
 
