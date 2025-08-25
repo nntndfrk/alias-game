@@ -103,8 +103,24 @@ export class AuthService {
   }
 
   logout(): void {
-    this.clearAuthState();
-    this.router.navigate(['/']);
+    // Call backend logout endpoint (optional, mainly for logging)
+    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
+      complete: () => {
+        this.clearAuthState();
+        // Clear any cookies that might have been set
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        this.router.navigate(['/']);
+      },
+      error: () => {
+        // Even if backend logout fails, clear local state
+        this.clearAuthState();
+        this.router.navigate(['/']);
+      }
+    });
   }
 
   private clearAuthState(): void {
@@ -116,6 +132,8 @@ export class AuthService {
     
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+    // Also clear sessionStorage in case anything was stored there
+    sessionStorage.clear();
   }
 
   getCurrentUser(): Observable<User> {

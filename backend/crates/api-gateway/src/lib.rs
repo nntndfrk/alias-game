@@ -46,6 +46,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/health", get(health_check))
         .route("/api/v1/auth/login", get(login))
         .route("/api/v1/auth/callback", post(auth_callback))
+        .route("/api/v1/auth/logout", post(logout))
         .route("/api/v1/auth/me", get(get_current_user))
         .route("/ws", get(websocket::websocket_handler))
         // Public room routes (no auth required)
@@ -106,7 +107,7 @@ async fn login() -> impl IntoResponse {
         .unwrap_or_else(|_| "http://localhost:4200/auth/callback".to_string());
 
     let auth_url = format!(
-        "https://id.twitch.tv/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=user:read:email",
+        "https://id.twitch.tv/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=user:read:email&force_verify=true",
         client_id,
         urlencoding::encode(&redirect_uri)
     );
@@ -161,4 +162,17 @@ async fn get_current_user(
         username: claims.username,
         twitch_id: claims.twitch_id,
     }))
+}
+
+async fn logout() -> impl IntoResponse {
+    #[derive(Serialize)]
+    struct LogoutResponse {
+        success: bool,
+        message: String,
+    }
+
+    Json(LogoutResponse {
+        success: true,
+        message: "Logged out successfully".to_string(),
+    })
 }

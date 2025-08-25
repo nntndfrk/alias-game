@@ -100,4 +100,27 @@ impl TwitchClient {
 
         Ok(response.status().is_success())
     }
+
+    pub async fn revoke_token(&self, access_token: &str) -> Result<(), AuthError> {
+        let params = [
+            ("client_id", &self.client_id),
+            ("token", &access_token.to_string()),
+        ];
+
+        let response = self
+            .client
+            .post("https://id.twitch.tv/oauth2/revoke")
+            .form(&params)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(AuthError::TwitchApiError(format!(
+                "Failed to revoke token: {error_text}"
+            )));
+        }
+
+        Ok(())
+    }
 }
