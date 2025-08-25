@@ -267,10 +267,7 @@ pub async fn start_round(
         .get(engine.game_state.current_team_index)
         .ok_or_else(|| AppError::bad_request("Invalid team index".to_string()))?;
 
-    let round = engine
-        .start_round()
-        .await
-        .map_err(AppError::bad_request)?;
+    let round = engine.start_round().await.map_err(AppError::bad_request)?;
 
     info!(
         "Round {} started for room {} by team {}",
