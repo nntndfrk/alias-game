@@ -35,7 +35,7 @@ impl ScoringSystem {
         match result {
             WordResult::Correct => self.points_per_correct,
             WordResult::Skipped => {
-                if skip_count >= self.skip_penalty_threshold {
+                if skip_count > self.skip_penalty_threshold {
                     self.penalty_per_violation
                 } else {
                     self.points_per_skip
