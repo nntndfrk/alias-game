@@ -1,18 +1,12 @@
+mod ukrainian_words;
+
 use mongodb::{
     bson::{doc, Document},
     Client,
 };
-use serde::{Deserialize, Serialize};
 use std::error::Error;
 use tracing::info;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Word {
-    word: String,
-    language: String,
-    difficulty: String,
-    category: Option<String>,
-}
+use ukrainian_words::{get_ukrainian_words, get_words_count_by_difficulty};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -31,69 +25,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let db = client.database("alias_game");
     let collection = db.collection::<Document>("words");
 
-    // Sample Ukrainian words for the game
-    let ukrainian_words = vec![
-        Word {
-            word: "кіт".to_string(),
-            language: "uk".to_string(),
-            difficulty: "easy".to_string(),
-            category: Some("тварини".to_string()),
-        },
-        Word {
-            word: "собака".to_string(),
-            language: "uk".to_string(),
-            difficulty: "easy".to_string(),
-            category: Some("тварини".to_string()),
-        },
-        Word {
-            word: "дім".to_string(),
-            language: "uk".to_string(),
-            difficulty: "easy".to_string(),
-            category: Some("будівлі".to_string()),
-        },
-        Word {
-            word: "сонце".to_string(),
-            language: "uk".to_string(),
-            difficulty: "easy".to_string(),
-            category: Some("природа".to_string()),
-        },
-        Word {
-            word: "вода".to_string(),
-            language: "uk".to_string(),
-            difficulty: "easy".to_string(),
-            category: Some("природа".to_string()),
-        },
-        Word {
-            word: "автомобіль".to_string(),
-            language: "uk".to_string(),
-            difficulty: "medium".to_string(),
-            category: Some("транспорт".to_string()),
-        },
-        Word {
-            word: "комп'ютер".to_string(),
-            language: "uk".to_string(),
-            difficulty: "medium".to_string(),
-            category: Some("технології".to_string()),
-        },
-        Word {
-            word: "університет".to_string(),
-            language: "uk".to_string(),
-            difficulty: "medium".to_string(),
-            category: Some("освіта".to_string()),
-        },
-        Word {
-            word: "демократія".to_string(),
-            language: "uk".to_string(),
-            difficulty: "hard".to_string(),
-            category: Some("політика".to_string()),
-        },
-        Word {
-            word: "філософія".to_string(),
-            language: "uk".to_string(),
-            difficulty: "hard".to_string(),
-            category: Some("наука".to_string()),
-        },
-    ];
+    // Get comprehensive Ukrainian words from the module
+    let ukrainian_words = get_ukrainian_words();
+
+    // Display statistics
+    let (easy_count, medium_count, hard_count) = get_words_count_by_difficulty();
+    info!("Preparing to seed words:");
+    info!("  Easy words: {}", easy_count);
+    info!("  Medium words: {}", medium_count);
+    info!("  Hard words: {}", hard_count);
+    info!("  Total words: {}", ukrainian_words.len());
 
     // Convert to documents
     let documents: Vec<Document> = ukrainian_words

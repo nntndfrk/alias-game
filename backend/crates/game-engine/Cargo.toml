@@ -30,3 +30,9 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # Logging
 tracing = "0.1"
+
+# Random
+rand = "0.8"
+
+# Futures
+futures-util = "0.3"
