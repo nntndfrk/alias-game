@@ -10,7 +10,7 @@ import {
   CardContentComponent,
   CardDescriptionComponent 
 } from '@shared/ui';
-import { WebSocketService } from '@core/services/websocket.service';
+import { WebSocketService, WebSocketMessage } from '@core/services/websocket.service';
 import { AuthService } from '../../auth/auth.service';
 
 interface Team {
@@ -382,7 +382,7 @@ export class TeamSelectionComponent implements OnInit, OnDestroy {
   constructor() {
     // Set current user ID
     effect(() => {
-      const user = (this.authService as any).currentUser();
+      const user = (this.authService as AuthService & { currentUser: () => { id: string } }).currentUser();
       if (user) {
         this.currentUserId.set(user.id);
       }
@@ -394,7 +394,10 @@ export class TeamSelectionComponent implements OnInit, OnDestroy {
     this.websocketService.messages$
       .pipe(takeUntil(this.destroy$))
       .subscribe(message => {
-        this.handleWebSocketMessage(message as any);
+        this.handleWebSocketMessage(message as WebSocketMessage & { 
+          teams?: Team[];
+          team?: Team & { players: string[] };
+        });
       });
     
     // Subscribe to connection state

@@ -289,7 +289,7 @@ interface GameState {
 })
 export class GamePlayComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  private timerSubscription: any = null;
+  private timerSubscription: { unsubscribe: () => void } | null = null;
   
   roomCode = '';
   gameState = signal<GameState | null>(null);
@@ -355,7 +355,7 @@ export class GamePlayComponent implements OnInit, OnDestroy {
   constructor() {
     // Set current user ID
     effect(() => {
-      const user = (this.authService as any).currentUser();
+      const user = (this.authService as AuthService & { currentUser: () => { id: string } }).currentUser();
       if (user) {
         this.currentUserId.set(user.id);
       }
